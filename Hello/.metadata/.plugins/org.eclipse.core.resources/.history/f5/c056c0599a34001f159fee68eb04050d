@@ -1,0 +1,2 @@
+spring.application.name=testhello
+server,port=1000
