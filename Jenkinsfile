@@ -12,6 +12,7 @@ pipeline {
         string(name: 'PYTHON_NAMESPACE', defaultValue: 'python', description: 'Python Kubernetes Namespace')
         string(name: 'pom-location', defaultValue: 'vat/lib/jenkins/workspace/j-p-project/java-app/Hello/testhello')
         string(name: 'your_passward', defaultValue: '123')
+        string(name: 'java-app', defaultValue: 'Desktop/testhello')
     }
 
     environment {
