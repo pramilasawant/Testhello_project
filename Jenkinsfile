@@ -25,7 +25,7 @@ pipeline {
 
         stage('Build Java Application') {
             steps {
-                dir('var/lib/jenkins/workspace/testhello/Hello/testhello') {
+                dir('var/lib/jenkins/workspace/j-p-project/java-app/Hello/testhello') {
                     sh 'mvn clean package'
                 }
             }
