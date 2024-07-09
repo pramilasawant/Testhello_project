@@ -10,7 +10,7 @@ pipeline {
         string(name: 'PYTHON_IMAGE', defaultValue: 'pramila188/python-app', description: 'Python Docker Image Name')
         string(name: 'JAVA_NAMESPACE', defaultValue: 'test1', description: 'Java Kubernetes Namespace')
         string(name: 'PYTHON_NAMESPACE', defaultValue: 'python', description: 'Python Kubernetes Namespace')
-        string(name: 'java-app', defaultValue: 'vat/lib/jenkins/workspace/j-p-project/java-app/Hello/testhello')
+        string(name: 'pom-location', defaultValue: 'vat/lib/jenkins/workspace/j-p-project/java-app/Hello/testhello')
         string(name: 'your_passward', defaultValue: '123')
     }
 
@@ -30,7 +30,7 @@ pipeline {
         
         stage('Build Java Application') {
             steps {
-                dir('java-app') {
+                dir('pom-location') {
                      sh 'mvn clean package'
                 }
             }
