@@ -1,48 +1,41 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'JAVA_REPO_URL', defaultValue: 'https://github.com/pramilasawant/Testhello_project.git', description: 'Java Application Git Repository URL')
-        string(name: 'JAVA_BRANCH', defaultValue: 'main', description: 'Java Application Git Branch')
-        string(name: 'PYTHON_REPO_URL', defaultValue: 'https://github.com/pramilasawant/phython-application.git', description: 'Python Application Git Repository URL')
-        string(name: 'PYTHON_BRANCH', defaultValue: 'main', description: 'Python Application Git Branch')
-        string(name: 'JAVA_IMAGE', defaultValue: 'pramila188/testhello', description: 'Java Docker Image Name')
-        string(name: 'PYTHON_IMAGE', defaultValue: 'pramila188/python-app', description: 'Python Docker Image Name')
-        string(name: 'JAVA_NAMESPACE', defaultValue: 'test1', description: 'Java Kubernetes Namespace')
-        string(name: 'PYTHON_NAMESPACE', defaultValue: 'python', description: 'Python Kubernetes Namespace')
-        string(name: 'pom-location', defaultValue: 'vat/lib/jenkins/workspace/j-p-project/java-app/Hello/testhello')
-        string(name: 'your_passward', defaultValue: '123')
-        string(name: 'java-app', defaultValue: 'Desktop/testhello')
-    }
-
     environment {
         DOCKER_CREDENTIALS_ID = 'dockerhub'
-        SLACK_CREDENTIALS_ID = 'slackpwd'  // Ensure this is the correct ID
+        DOCKERHUB_REPO = 'pramila188'
+        SLACK_CHANNEL = '#build-notifications'
+        SLACK_CREDENTIAL_ID = 'slackpwd'
     }
 
     stages {
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Checkout Java Application') {
             steps {
                 dir('java-app') {
-                    git branch: params.JAVA_BRANCH, url: params.JAVA_REPO_URL
+                    git url: 'https://github.com/pramilasawant/Testhello_project.git', branch: 'main'
                 }
             }
         }
-        
+
         stage('Build Java Application') {
             steps {
-                dir('pom-location') {
-                     sh 'mvn clean package'
+                dir('java-app') {
+                    sh 'mvn clean package'
                 }
             }
         }
-        
 
         stage('Build Java Docker Image') {
             steps {
                 dir('java-app') {
                     script {
-                        docker.build(params.JAVA_IMAGE)
+                        dockerImage = docker.build("${DOCKERHUB_REPO}/java-app:${env.BUILD_ID}")
                     }
                 }
             }
@@ -50,11 +43,9 @@ pipeline {
 
         stage('Push Java Docker Image') {
             steps {
-                dir('java-app') {
-                    script {
-                        docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_CREDENTIALS_ID) {
-                            docker.image(params.JAVA_IMAGE).push()
-                        }
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+                        dockerImage.push()
                     }
                 }
             }
@@ -62,22 +53,28 @@ pipeline {
 
         stage('Deploy Java Application') {
             steps {
-                sh "helm upgrade --install java-app ./helm/java-app --namespace ${params.JAVA_NAMESPACE} --set image.repository=${params.JAVA_IMAGE}"
+                script {
+                    kubectlDeploy([
+                        kubeconfigId: 'kubeconfig', 
+                        configs: 'java-app/k8s/deployment.yaml', 
+                        enableConfigSubstitution: true
+                    ])
+                }
             }
         }
 
         stage('Checkout Python Application') {
             steps {
                 dir('python-app') {
-                    git branch: params.PYTHON_BRANCH, url: params.PYTHON_REPO_URL
+                    git url: 'https://github.com/pramilasawant/phython-application.git', branch: 'main'
                 }
             }
         }
-        
+
         stage('Build Python Application') {
             steps {
                 dir('python-app') {
-                    sh 'python setup.py install'
+                    sh 'pip install -r requirements.txt'
                 }
             }
         }
@@ -86,7 +83,7 @@ pipeline {
             steps {
                 dir('python-app') {
                     script {
-                        docker.build(params.PYTHON_IMAGE)
+                        dockerImage = docker.build("${DOCKERHUB_REPO}/python-app:${env.BUILD_ID}")
                     }
                 }
             }
@@ -94,11 +91,9 @@ pipeline {
 
         stage('Push Python Docker Image') {
             steps {
-                dir('python-app') {
-                    script {
-                        docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_CREDENTIALS_ID) {
-                            docker.image(params.PYTHON_IMAGE).push()
-                        }
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+                        dockerImage.push()
                     }
                 }
             }
@@ -106,29 +101,23 @@ pipeline {
 
         stage('Deploy Python Application') {
             steps {
-                sh "helm upgrade --install python-app ./helm/python-app --namespace ${params.PYTHON_NAMESPACE} --set image.repository=${params.PYTHON_IMAGE}"
+                script {
+                    kubectlDeploy([
+                        kubeconfigId: 'kubeconfig', 
+                        configs: 'python-app/k8s/deployment.yaml', 
+                        enableConfigSubstitution: true
+                    ])
+                }
             }
         }
     }
 
     post {
-        always {
-            script {
-                try {
-                    slackSend (channel: '#build-notifications', color: 'good', tokenCredentialId: env.SLACK_CREDENTIALS_ID, message: "Build and deployment completed successfully.")
-                } catch (e) {
-                    echo "Slack notification failed: ${e.message}"
-                }
-            }
+        success {
+            slackSend channel: SLACK_CHANNEL, color: 'good', message: "Build ${env.BUILD_NUMBER} succeeded.", tokenCredentialId: SLACK_CREDENTIAL_ID
         }
         failure {
-            script {
-                try {
-                    slackSend (channel: '#build-notifications', color: 'danger', tokenCredentialId: env.SLACK_CREDENTIALS_ID, message: "Build and deployment failed.")
-                } catch (e) {
-                    echo "Slack notification failed: ${e.message}"
-                }
-            }
+            slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Build ${env.BUILD_NUMBER} failed.", tokenCredentialId: SLACK_CREDENTIAL_ID
         }
     }
 }
