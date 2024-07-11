@@ -45,6 +45,8 @@ pipeline {
                             dir('Hello/testhello') {
                                 sh 'mvn clean package'
                                 docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
+                                    sh 'docker build -t pramila188/python-app:latest .'
+                                        sh 'docker push pramila188/python-app:latest'
                                     def javaImage = docker.build("${DOCKERHUB_USERNAME}/testhello:latest", '.')
                                     javaImage.push()
                                     java_build(imageName: 'testhello')
@@ -58,9 +60,7 @@ pipeline {
                 stage('Build and Push Python Application') {
                     steps {
                         script {
-                            git url: 'https://github.com/pramilasawant/phython-application.git', branch: 'main'
-                            
-                            dir('python-app') {
+                             dir('python-app') {
                                 docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
                                     def pythonImage = docker.build("${DOCKERHUB_USERNAME}/python-app:latest", '.')
                                     pythonImage.push()
