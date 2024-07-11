@@ -43,10 +43,9 @@ pipeline {
                               git url: 'https://github.com/pramilasawant/Testhello_project.git', branch: 'main'
 
                             dir('Hello/testhello') {
-                                sh 'mvn clean package'
+                              
                                 docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
-                                    sh 'docker build -t pramila188/python-app:latest .'
-                                        sh 'docker push pramila188/python-app:latest'
+                                    
                                     def javaImage = docker.build("${DOCKERHUB_USERNAME}/testhello:latest", '.')
                                     javaImage.push()
                                     java_build(imageName: 'testhello')
