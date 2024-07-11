@@ -40,7 +40,9 @@ pipeline {
                 stage('Build and Push Java Application') {
                     steps {
                         script {
-                            dir('https://github.com/pramilasawant/Testhello_project/blob/main/Hello/testhello/Dockerfile') {
+                              git url: 'https://github.com/pramilasawant/Testhello_project.git', branch: 'main'
+
+                            dir('Hello/testhello') {
                                 docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
                                     def javaImage = docker.build("${DOCKERHUB_USERNAME}/testhello:latest", '.')
                                     javaImage.push()
