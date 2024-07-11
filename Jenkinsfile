@@ -1,123 +1,82 @@
+@Library('shared-lib') _
+
 pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'dockerhub'
-        DOCKERHUB_REPO = 'pramila188'
-        SLACK_CHANNEL = '#build-notifications'
-        SLACK_CREDENTIAL_ID = 'slackpwd'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhubpwd')
+        DOCKERHUB_USERNAME = 'pramila188'
+        SLACK_CREDENTIALS = 'slackpwd'
     }
 
     stages {
-        stage('Checkout SCM') {
+        stage('Cleanup Workspace') {
             steps {
-                checkout scm
+                deleteDir() // Deletes all files in the workspace
             }
         }
 
-        stage('Checkout Java Application') {
-            steps {
-                dir('java-app') {
-                    git url: 'https://github.com/pramilasawant/Testhello_project.git', branch: 'main'
+        stage('Checkout Repositories') {
+            parallel {
+                stage('Checkout Java Application') {
+                    steps {
+                        dir('java-app') {
+                            git branch: 'main', url: 'https://github.com/pramilasawant/Testhello_project.git'
+                        }
+                    }
                 }
-            }
-        }
-
-        stage('Build Java Application') {
-            steps {
-                dir('var/lib/jenkins/workspace/j-p-project/java-app/Hello/testhello') {
-                    sh 'mvn clean package'
-                }
-            }
-        }
-
-        stage('Build Java Docker Image') {
-            steps {
-                dir('java-app') {
-                    script {
-                        dockerImage = docker.build("${DOCKERHUB_REPO}/java-app:${env.BUILD_ID}")
+                stage('Checkout Python Application') {
+                    steps {
+                        dir('python-app') {
+                            git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
+                        }
                     }
                 }
             }
         }
 
-        stage('Push Java Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        dockerImage.push()
+        stage('Build and Deploy') {
+            parallel {
+                stage('Build and Push Java Application') {
+                    steps {
+                        script {
+                            dir('java-app') {
+                                docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
+                                    def javaImage = docker.build("${DOCKERHUB_USERNAME}/testhello:latest", '.')
+                                    javaImage.push()
+                                    java_build(imageName: 'testhello')
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        stage('Deploy Java Application') {
-            steps {
-                script {
-                    kubectlDeploy([
-                        kubeconfigId: 'kubeconfig', 
-                        configs: 'java-app/k8s/deployment.yaml', 
-                        enableConfigSubstitution: true
-                    ])
-                }
-            }
-        }
-
-        stage('Checkout Python Application') {
-            steps {
-                dir('python-app') {
-                    git url: 'https://github.com/pramilasawant/phython-application.git', branch: 'main'
-                }
-            }
-        }
-
-        stage('Build Python Application') {
-            steps {
-                dir('python-app') {
-                    sh 'pip install -r requirements.txt'
-                }
-            }
-        }
-
-        stage('Build Python Docker Image') {
-            steps {
-                dir('python-app') {
-                    script {
-                        dockerImage = docker.build("${DOCKERHUB_REPO}/python-app:${env.BUILD_ID}")
+                stage('Build and Push Python Application') {
+                    steps {
+                        script {
+                            dir('python-app') {
+                                docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
+                                    def pythonImage = docker.build("${DOCKERHUB_USERNAME}/python-app:latest", '.')
+                                    pythonImage.push()
+                                }
+                            }
+                        }
                     }
-                }
-            }
-        }
-
-        stage('Push Python Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        dockerImage.push()
-                    }
-                }
-            }
-        }
-
-        stage('Deploy Python Application') {
-            steps {
-                script {
-                    kubectlDeploy([
-                        kubeconfigId: 'kubeconfig', 
-                        configs: 'python-app/k8s/deployment.yaml', 
-                        enableConfigSubstitution: true
-                    ])
                 }
             }
         }
     }
 
     post {
+        always {
+            cleanWs() // Clean workspace after build
+        }
         success {
-            slackSend channel: SLACK_CHANNEL, color: 'good', message: "Build ${env.BUILD_NUMBER} succeeded.", tokenCredentialId: SLACK_CREDENTIAL_ID
+            slackSend (color: '#00FF00', message: "Build succeeded: ${env.JOB_NAME} ${env.BUILD_NUMBER}", tokenCredentialId: SLACK_CREDENTIALS)
         }
         failure {
-            slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Build ${env.BUILD_NUMBER} failed.", tokenCredentialId: SLACK_CREDENTIAL_ID
+            slackSend (color: '#FF0000', message: "Build failed: ${env.JOB_NAME} ${env.BUILD_NUMBER}", tokenCredentialId: SLACK_CREDENTIALS)
         }
     }
 }
+
