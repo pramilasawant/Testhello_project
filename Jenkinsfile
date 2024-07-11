@@ -40,7 +40,7 @@ pipeline {
                 stage('Build and Push Java Application') {
                     steps {
                         script {
-                              git url: 'https://github.com/pramilasawant/Testhello_project.git', branch: 'main'
+                             
 
                             dir('Hello/testhello') {
                               
