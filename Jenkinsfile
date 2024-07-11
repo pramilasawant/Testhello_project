@@ -58,6 +58,8 @@ pipeline {
                 stage('Build and Push Python Application') {
                     steps {
                         script {
+                            git url: 'https://github.com/pramilasawant/phython-application.git' branch: 'main'
+                            
                             dir('python-app') {
                                 docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
                                     def pythonImage = docker.build("${DOCKERHUB_USERNAME}/python-app:latest", '.')
