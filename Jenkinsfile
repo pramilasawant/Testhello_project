@@ -23,7 +23,7 @@ pipeline {
                 stage('Checkout Python Application') {
                     steps {
                         dir('python-app') {
-                            git 'https://github.com/pramilasawant/phython-application.git'
+                             git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
                         }
                     }
                 }
