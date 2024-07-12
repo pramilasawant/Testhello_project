@@ -36,7 +36,7 @@ pipeline {
                         script {
                             dir('Testhello_project/tree/main/Hello/testhello') {
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
-                                    sh 'docker build -t pramila188/testhello:latest -f /var/lib/jenkins/workspace/j-p-project/Testhello_project/tree/main/Hello/testhello .'
+                                    sh 'docker build -t pramila188/testhello:latest .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
                                     sh 'docker push index.docker.io/pramila188/testhello:latest'
                                 }
