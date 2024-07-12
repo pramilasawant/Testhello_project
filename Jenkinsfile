@@ -38,12 +38,7 @@ pipeline {
         }
       }
 
-stage('Build and Push Python Application') {
-  steps {
-    sh 'ls'
-    sh 'docker build -t pramila188/python-app .'
-  }
-}
+
                 stage('Build and Push Python Application') {
                     steps {
                         script {
