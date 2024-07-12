@@ -35,7 +35,7 @@ pipeline {
                     steps {
                         script {
                             dir('java-app') {
-                                withDockerRegistry([url: '', credentialsId: 'dockerhunpwd']) {
+                                withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
                                     sh 'docker build -t pramila188/testhello:latest .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
                                     sh 'docker push index.docker.io/pramila188/testhello:latest'
@@ -48,7 +48,7 @@ pipeline {
                     steps {
                         script {
                             dir('python-app') {
-                                withDockerRegistry([url: '', credentialsId: 'dockerhunpwd']) {
+                                withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
                                     sh 'docker build -t pramila188/python-app:latest .'
                                     sh 'docker tag pramila188/python-app:latest index.docker.io/pramila188/python-app:latest'
                                     sh 'docker push index.docker.io/pramila188/python-app:latest'
