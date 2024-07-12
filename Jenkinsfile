@@ -15,7 +15,7 @@ pipeline {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
-                        dir('java-app') {
+                        dir('testhello') {
                             git 'https://github.com/pramilasawant/Testhello_project.git'
                         }
                     }
