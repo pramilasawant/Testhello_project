@@ -47,6 +47,8 @@ pipeline {
                                 docker.withRegistry('https://index.docker.io/v1/', 'dockerhubpwd') {
                                     
                                     def javaImage = docker.build("${DOCKERHUB_USERNAME}/testhello:latest", '.')
+                                        sh 'docker build -t pramila188/testhello:latest .'
+                                        sh 'docker push pramila188/testhello:latest'
                                     javaImage.push()
                                     java_build(imageName: 'testhello')
                                   
