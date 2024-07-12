@@ -32,19 +32,18 @@ pipeline {
         stage('Build and Deploy') {
             parallel {
                 stage('Build and Push Java Application') {
-                    steps {
-                        script {
-                            dir('Testhello_project/Hello/testhello') {
+                  steps {
+                    sh 'ls'
+                    sh 'docker build -t pramila188/testhello .'
+        }
+      }
 
-                                withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
-                                    sh 'docker build -t pramila188/testhello .'
-                                    sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
-                                    sh 'docker push index.docker.io/pramila188/testhello:latest'
-                                }
-                            }
-                        }
-                    }
-                }
+stage('Build and Push Python Application') {
+  steps {
+    sh 'ls'
+    sh 'docker build -t pramila188/python-app .'
+  }
+}
                 stage('Build and Push Python Application') {
                     steps {
                         script {
