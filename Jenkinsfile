@@ -6,12 +6,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhubpwd')
     }
     stages {
-        stage('Cleanup Workspace') {
-            steps {
-                deleteDir()
-            }
-        }
-        stage('Checkout Repositories') {
+         stage('Checkout Repositories') {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
