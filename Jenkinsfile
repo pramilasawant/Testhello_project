@@ -40,6 +40,7 @@ pipeline {
                                     sh 'docker build -t pramila188/testhello .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
                                     sh 'docker push index.docker.io/pramila188/testhello:latest'
+                                     sh './mvnw clean package'
                                 }
                             }
                         }
