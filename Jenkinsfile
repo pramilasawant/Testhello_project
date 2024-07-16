@@ -1,60 +1,60 @@
-@Library('shared-lib') _
-
 pipeline {
     agent any
+
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhubpwd')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhunpwd')
+        SLACK_CREDENTIAL_ID = 'slackpwd'
+        JAVA_APP_REPO = 'https://github.com/pramilasawant/Testhello_project.git'
+        PYTHON_APP_REPO = 'https://github.com/pramilasawant/phython-application.git'
     }
+
     stages {
         stage('Cleanup Workspace') {
             steps {
                 deleteDir()
             }
         }
-         stage('Checkout Repositories') {
+
+        stage('Checkout Repositories') {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
                         dir('testhello') {
-                            git 'https://github.com/pramilasawant/Testhello_project.git'
+                            git url: "${JAVA_APP_REPO}", branch: 'main'
                         }
                     }
                 }
                 stage('Checkout Python Application') {
                     steps {
                         dir('python-app') {
-                             git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
+                            git url: "${PYTHON_APP_REPO}", branch: 'main'
                         }
                     }
                 }
             }
         }
+
         stage('Build and Deploy') {
             parallel {
                 stage('Build and Push Java Application') {
                     steps {
-                        script {
-                            dir('testhello') {
-
-                                withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
+                        dir('testhello') {
+                            script {
+                                docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
                                     sh 'docker build -t pramila188/testhello .'
-                                    sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
-                                    sh 'docker push index.docker.io/pramila188/testhello:latest'
+                                    sh 'docker push pramila188/testhello'
                                 }
                             }
                         }
                     }
                 }
-
-
                 stage('Build and Push Python Application') {
                     steps {
-                        script {
-                            dir('python-app') {
-                                withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
+                        dir('python-app') {
+                            script {
+                                docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
                                     sh 'docker build -t pramila188/python-app:latest .'
-                                    sh 'docker tag pramila188/python-app:latest index.docker.io/pramila188/python-app:latest'
-                                    sh 'docker push index.docker.io/pramila188/python-app:latest'
+                                    sh 'docker push pramila188/python-app:latest'
                                 }
                             }
                         }
@@ -63,10 +63,26 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             cleanWs()
-            slackSend(channel: '#build-status', color: '#FF0000', message: "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            script {
+                try {
+                    slackSend(channel: '#build-status', color: '#FF0000', message: "Build ${currentBuild.fullDisplayName} failed", tokenCredentialId: SLACK_CREDENTIAL_ID)
+                } catch (e) {
+                    echo "Slack notification failed: ${e.message}"
+                }
+            }
+        }
+        success {
+            script {
+                try {
+                    slackSend(channel: '#build-status', color: '#00FF00', message: "Build ${currentBuild.fullDisplayName} succeeded", tokenCredentialId: SLACK_CREDENTIAL_ID)
+                } catch (e) {
+                    echo "Slack notification failed: ${e.message}"
+                }
+            }
         }
     }
 }
