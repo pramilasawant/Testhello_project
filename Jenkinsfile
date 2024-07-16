@@ -4,8 +4,6 @@ pipeline {
     agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhubpwd')
-        SLACK_CHANNEL = '#build-status'
-        SLACK_COLOR = '#FF0000'
     }
     stages {
         stage('Cleanup Workspace') {
@@ -13,7 +11,7 @@ pipeline {
                 deleteDir()
             }
         }
-        stage('Checkout Repositories') {
+         stage('Checkout Repositories') {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
@@ -25,35 +23,7 @@ pipeline {
                 stage('Checkout Python Application') {
                     steps {
                         dir('python-app') {
-                            git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
-                        }
-                    }
-                }
-            }
-        }
-        stage('Verify Dockerfile') {
-            parallel {
-                stage('Verify Java Dockerfile') {
-                    steps {
-                        script {
-                            dir('testhello') {
-                                sh 'ls -la'
-                                if (!fileExists('Dockerfile')) {
-                                    error 'Dockerfile not found in testhello directory'
-                                }
-                            }
-                        }
-                    }
-                }
-                stage('Verify Python Dockerfile') {
-                    steps {
-                        script {
-                            dir('python-app') {
-                                sh 'ls -la'
-                                if (!fileExists('Dockerfile')) {
-                                    error 'Dockerfile not found in python-app directory'
-                                }
-                            }
+                             git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
                         }
                     }
                 }
@@ -65,6 +35,7 @@ pipeline {
                     steps {
                         script {
                             dir('testhello') {
+
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
                                     sh 'docker build -t pramila188/testhello .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
@@ -74,6 +45,8 @@ pipeline {
                         }
                     }
                 }
+
+
                 stage('Build and Push Python Application') {
                     steps {
                         script {
@@ -93,11 +66,7 @@ pipeline {
     post {
         always {
             cleanWs()
-            script {
-                def buildStatus = currentBuild.result ?: 'SUCCESS'
-                def color = buildStatus == 'SUCCESS' ? 'good' : SLACK_COLOR
-                slackSend(channel: SLACK_CHANNEL, color: color, message: "${buildStatus}: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
-            }
+            slackSend(channel: '#build-status', color: '#FF0000', message: "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
         }
     }
 }
