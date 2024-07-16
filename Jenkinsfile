@@ -4,6 +4,8 @@ pipeline {
     agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhubpwd')
+        SLACK_CHANNEL = '#build-status'
+        SLACK_COLOR = '#FF0000'
     }
     stages {
         stage('Cleanup Workspace') {
@@ -11,7 +13,7 @@ pipeline {
                 deleteDir()
             }
         }
-         stage('Checkout Repositories') {
+        stage('Checkout Repositories') {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
@@ -35,7 +37,6 @@ pipeline {
                     steps {
                         script {
                             dir('testhello') {
-
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
                                     sh 'docker build -t pramila188/testhello .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
@@ -45,8 +46,6 @@ pipeline {
                         }
                     }
                 }
-
-
                 stage('Build and Push Python Application') {
                     steps {
                         script {
@@ -66,7 +65,11 @@ pipeline {
     post {
         always {
             cleanWs()
-            slackSend(channel: '#build-status', color: '#FF0000', message: "Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            script {
+                def buildStatus = currentBuild.result ?: 'SUCCESS'
+                def color = buildStatus == 'SUCCESS' ? 'good' : SLACK_COLOR
+                slackSend(channel: SLACK_CHANNEL, color: color, message: "${buildStatus}: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            }
         }
     }
 }
