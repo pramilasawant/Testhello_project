@@ -38,7 +38,7 @@ pipeline {
                 stage('Build and Push Java Application') {
                     steps {
                         script {
-                            dir('Testhello_project') {
+                            dir('.') {
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
                                     sh 'docker build -t pramila188/testhello .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
