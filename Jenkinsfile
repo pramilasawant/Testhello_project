@@ -15,7 +15,7 @@ pipeline {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
-                        dir('testhello') {
+                        dir('Testhello_project') {
                             git 'https://github.com/pramilasawant/Testhello_project.git'
                             // Add a debug step to list files
                             sh 'ls -la'
