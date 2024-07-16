@@ -11,19 +11,23 @@ pipeline {
                 deleteDir()
             }
         }
-         stage('Checkout Repositories') {
+        stage('Checkout Repositories') {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
                         dir('testhello') {
                             git 'https://github.com/pramilasawant/Testhello_project.git'
+                            // Add a debug step to list files
+                            sh 'ls -la'
                         }
                     }
                 }
                 stage('Checkout Python Application') {
                     steps {
                         dir('python-app') {
-                             git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
+                            git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
+                            // Add a debug step to list files
+                            sh 'ls -la'
                         }
                     }
                 }
@@ -35,7 +39,6 @@ pipeline {
                     steps {
                         script {
                             dir('testhello') {
-
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
                                     sh 'docker build -t pramila188/testhello .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
@@ -45,8 +48,6 @@ pipeline {
                         }
                     }
                 }
-
-
                 stage('Build and Push Python Application') {
                     steps {
                         script {
