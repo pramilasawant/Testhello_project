@@ -25,7 +25,35 @@ pipeline {
                 stage('Checkout Python Application') {
                     steps {
                         dir('python-app') {
-                             git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
+                            git branch: 'main', url: 'https://github.com/pramilasawant/phython-application.git'
+                        }
+                    }
+                }
+            }
+        }
+        stage('Verify Dockerfile') {
+            parallel {
+                stage('Verify Java Dockerfile') {
+                    steps {
+                        script {
+                            dir('testhello') {
+                                sh 'ls -la'
+                                if (!fileExists('Dockerfile')) {
+                                    error 'Dockerfile not found in testhello directory'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Verify Python Dockerfile') {
+                    steps {
+                        script {
+                            dir('python-app') {
+                                sh 'ls -la'
+                                if (!fileExists('Dockerfile')) {
+                                    error 'Dockerfile not found in python-app directory'
+                                }
+                            }
                         }
                     }
                 }
