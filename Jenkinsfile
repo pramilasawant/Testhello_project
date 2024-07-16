@@ -19,6 +19,7 @@ pipeline {
                             git 'https://github.com/pramilasawant/Testhello_project.git'
                             // Add a debug step to list files
                             sh 'ls -la'
+                            sh 'ls -la Hello/testhello'
                         }
                     }
                 }
@@ -40,6 +41,8 @@ pipeline {
                         script {
                             dir('testhello') {
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
+                                    // Add a debug step to ensure Dockerfile path
+                                    sh 'ls -la Hello/testhello'
                                     sh 'docker build -t pramila188/testhello -f Hello/testhello/Dockerfile .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
                                     sh 'docker push index.docker.io/pramila188/testhello:latest'
