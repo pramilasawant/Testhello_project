@@ -15,7 +15,7 @@ pipeline {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
-                        dir('Testhello_project') {
+                        dir('testhello') {
                             git 'https://github.com/pramilasawant/Testhello_project.git'
                             // Add a debug step to list files
                             sh 'ls -la'
@@ -38,9 +38,9 @@ pipeline {
                 stage('Build and Push Java Application') {
                     steps {
                         script {
-                            dir('.') {
+                            dir('testhello') {
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
-                                    sh 'docker build -t pramila188/testhello .'
+                                    sh 'docker build -t pramila188/testhello -f Hello/testhello/Dockerfile .'
                                     sh 'docker tag pramila188/testhello:latest index.docker.io/pramila188/testhello:latest'
                                     sh 'docker push index.docker.io/pramila188/testhello:latest'
                                 }
