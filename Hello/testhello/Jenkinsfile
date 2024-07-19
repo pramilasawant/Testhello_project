@@ -15,7 +15,7 @@ pipeline {
             parallel {
                 stage('Checkout Java Application') {
                     steps {
-                        dir('testhello') {
+                        dir('Hello/testhello') {
                             git 'https://github.com/pramilasawant/Testhello_project.git'
                         }
                     }
@@ -34,7 +34,7 @@ pipeline {
                 stage('Build and Push Java Application') {
                     steps {
                         script {
-                            dir('testhello') {
+                            dir('Hello/testhello') {
 
                                 withDockerRegistry([url: '', credentialsId: 'dockerhubpwd']) {
                                     sh 'docker build -t pramila188/testhello .'
