@@ -1,2 +1,2 @@
-@Library('jenkins-shared-library') _
+@Library('shared_library') _
 sharedPipeline()
